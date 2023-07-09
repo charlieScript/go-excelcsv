@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"image/color"
+	"os"
 	"strings"
 
 	// "strings"
@@ -28,8 +31,14 @@ import (
 func main() {
 	myApp := app.New()
 	myWindow := myApp.NewWindow("Gbedu")
-	myWindow.Resize(fyne.NewSize(800, 600))
-	myWindow.Title()
+	myWindow.Resize(fyne.NewSize(800, 500))
+
+	file, _ := os.ReadFile("icon.jpeg")
+
+	pic := fyne.NewStaticResource("name", file)
+
+	myApp.SetIcon(pic)
+	myWindow.SetIcon(pic)
 
 	var selectedOption string
 	var hasHeaders bool = false
@@ -45,21 +54,29 @@ func main() {
 		hasHeaders = checked
 	})
 
-	textArea := widget.NewMultiLineEntry()
+	textArea := widget.NewEntry()
 	textArea.MultiLine = true
-	textArea.Resize(fyne.NewSize(600, 900))
+
+	scroll := container.NewVScroll(textArea)
+	scroll.SetMinSize(fyne.NewSize(200, 400))
 
 	showError := func() {
 		alertContent := container.NewVBox()
 		dialog.ShowCustom(errorMessage, "OK", alertContent, myWindow)
 	}
 
+	downloadBtn := widget.NewButton("Download JSON", func() {
+
+	})
+
+	downloadBtn.Disable()
+
 	// Create a button to display the selected option
 	showButton := widget.NewButton("Open file", func() {
 		dialog.ShowFileOpen(func(reader fyne.URIReadCloser, err error) {
 			if err == nil && reader != nil {
 				var fileExt string
-				filters := []string{".csv", ".xlxs"}
+				filters := []string{"csv", "xlsx"}
 				fileExt = reader.URI().Extension()
 
 				fileExt = strings.Split(fileExt, ".")[1]
@@ -87,26 +104,32 @@ func main() {
 					return
 				}
 
-				// if !strings.Contains(selectedOption, fileExt) {
-				// 	showError()
-				// 	return
-				// }
-
 				var data []byte
 
-				switch selectedOption {
+				switch fileExt {
 				case "csv":
 					data = converters.ConvertCSVToJSON(reader.URI().Path(), hasHeaders)
-					break
 				case "excel":
 					data = converters.ConvertExcelToJSON(reader.URI().Path(), hasHeaders)
-					break
 				}
-				textArea.SetText(string(data))
 
+				var formattedJSON bytes.Buffer
+				err := json.Indent(&formattedJSON, []byte(data), "", "  ")
+				if err != nil {
+					// Handle error
+					errorMessage = "File selection canceled or error occurred:"
+					showError()
+					return
+				}
+
+				textArea.SetText(formattedJSON.String())
+				fmt.Print(data)
+				downloadBtn.Enable()
 				defer reader.Close()
 
 			} else {
+				errorMessage = "File selection canceled or error occurred:"
+				showError()
 				fmt.Println("File selection canceled or error occurred:", err)
 			}
 		}, myWindow)
@@ -119,7 +142,8 @@ func main() {
 	content := container.NewVBox(
 		grid,
 		showButton,
-		textArea,
+		scroll,
+		downloadBtn,
 	)
 
 	myWindow.SetContent(content)
