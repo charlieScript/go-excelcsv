@@ -3,7 +3,6 @@ package gui
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"image/color"
 	"os"
 	"strings"
@@ -65,12 +64,10 @@ func RenderUI() {
 	saveFileDialog := func() {
 		saveDialog := dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error) {
 			if err != nil {
-				fmt.Println("Error while saving file:", err)
 				return
 			}
 
 			if writer == nil {
-				fmt.Println("Save file dialog was canceled")
 				return
 			}
 
@@ -103,9 +100,6 @@ func RenderUI() {
 
 				fileExt = strings.Split(fileExt, ".")[1]
 
-				fmt.Println(fileExt)
-				fmt.Println("Comparsion", utils.Contains(filters, fileExt))
-
 				if !utils.Contains(filters, fileExt) {
 					errorMessage = "Invalid file Extension"
 					showError()
@@ -117,8 +111,6 @@ func RenderUI() {
 				} else {
 					fileExt = "excel"
 				}
-
-				fmt.Println(selectedOption, fileExt)
 
 				if selectedOption != fileExt {
 					errorMessage = "Invalid file format"
@@ -143,13 +135,13 @@ func RenderUI() {
 				}
 
 				textArea.SetText(formattedJSON.String())
+				jsonData = formattedJSON.Bytes()
 				downloadBtn.Enable()
 				defer reader.Close()
 
 			} else {
 				errorMessage = "File selection canceled or error occurred:"
 				showError()
-				fmt.Println("File selection canceled or error occurred:", err)
 			}
 		}, myWindow)
 	})
