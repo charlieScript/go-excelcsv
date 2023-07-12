@@ -75,7 +75,7 @@ func RenderUI() {
 		}, myWindow)
 		timestamp := time.Now().Format("20060102-150405")
 
-		fileName := "data-" + timestamp + ".json"
+		fileName := "datad-" + timestamp + ".json"
 		saveDialog.SetFileName(fileName)
 		saveDialog.SetFilter(storage.NewExtensionFileFilter([]string{".xlxs", ".csv"}))
 		saveDialog.Show()
